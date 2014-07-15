@@ -6,39 +6,34 @@
  * To change this template use File | Settings | File Templates.
  */
 package {
-import flash.display.Sprite;
-import flash.geom.Point;
 
 public class Solider{
     private var stamina :       uint;
     public var army : Army;
+    public var cell : Cell;
 
     public function Solider( a : Army ) {
         army = a;
         stamina = 50;
     }
 
-    public function Move( cell:Cell ) : uint
+    public function Move() : uint
     {
         var candidates : Array = [];
-        var dx = cell.x - army.x;
-        var dy = cell.y - army.y;
+        for( var i : uint = 0; i <cell.siblings.length; i++ )
+        {
+            candidates.push(
+                    {
+                        c: cell.siblings[i],
+                        d:  D( cell.siblings[i] )
+                    }
+            )
+        }
 
-        if( dx > 0 ) candidates.push(0);
-        if( dx < 0 ) candidates.push(2);
-        if( dx == 0 ) candidates.push( Math.random() > 0.5 ? 0 : 2 );
-
-        if( dy > 0 ) candidates.push(1);
-        if( dy < 0 ) candidates.push(3);
-        if( dy == 0 ) candidates.push( Math.random() > 0.5 ? 1 : 3 );
-
-        if( Math.abs(dx) < Math.abs(dy) ) candidates.reverse();
-
-        candidates.push( Math.floor( 4*Math.random() ) );
-
+        candidates.sort( SortCandidates );
         for( var i: uint = 0; i<candidates.length; i++ )
         {
-            var candidate : Cell = cell.siblings[ candidates[i] ];
+            var candidate : Cell = candidates[i].c;
             if( candidate.solider == null )
             {
                 if( candidate.isObstacle ) continue;
@@ -55,6 +50,20 @@ public class Solider{
             }
         }
         return cell.index;
+    }
+
+    private function SortCandidates( a:Object, b:Object ):int {
+        var r : Number = 1+( ( Math.random()-0.5)/4);
+        if(r*a.d > b.d ) return 1;
+        if(r*a.d < b.d ) return -1;
+        return 0;
+    }
+
+    private function D( cell:Cell ) : Number
+    {
+        var dx = Math.abs(cell.x - army.x);
+        var dy = Math.abs(cell.y - army.y);
+        return Math.max( dx,dy );
     }
 
     public function kill( attacker:Solider ):Boolean

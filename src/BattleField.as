@@ -6,11 +6,11 @@
  * To change this template use File | Settings | File Templates.
  */
 package {
-import flash.display.Graphics;
 import flash.utils.ByteArray;
 
 public class BattleField {
     public var board : Vector.<Cell> = new Vector.<Cell>();
+    public var soliders : Vector.<Solider> = new Vector.<Solider>();
     private var width : uint;
     private var height : uint;
 
@@ -24,24 +24,33 @@ public class BattleField {
         var n : uint = 0;
         for( var i in a )
             for( var j in a[i].soliders )
+            {
                 board[n++].solider = a[i].soliders[j];
+                soliders.push( a[i].soliders[j] );
+            }
 
         board.sort( shuffle );
-        board.forEach( IndexBoard );
-    }
 
-    private function IndexBoard( cell:Cell, index:int, vector:Vector.<Cell> ):void
-    {
-        var y : uint = Math.floor( index/width );
-        var x = index - y*width;
-        cell.siblings.push( x>0         ? board[index-1]        : new Cell( true ) );
-        cell.siblings.push( y>0         ? board[index-width]    : new Cell( true ) );
-        cell.siblings.push( x<width-1   ? board[index+1]        : new Cell( true ) );
-        cell.siblings.push( y<height-1  ? board[index+width]    : new Cell( true ) );
+        for( var index : uint = 0; index < board.length; index++ )
+        {
+            var cell : Cell = board[index];
+            if( cell.solider != null ) cell.solider.cell = cell;
+            var y : uint = Math.floor( index/width );
+            var x = index - y*width;
+            cell.siblings[0] = x>0         ? board[index-1]        : new Cell( true );
+            cell.siblings[1] = y>0         ? board[index-width]    : new Cell( true );
+            cell.siblings[2] = x<width-1   ? board[index+1]        : new Cell( true );
+            cell.siblings[3] = y<height-1  ? board[index+width]    : new Cell( true );
 
-        cell.index = index;
-        cell.x = x;
-        cell.y = y;
+            cell.siblings[4] = x>0 && y>0  ? board[index-1-width]        : new Cell( true );
+            cell.siblings[5] = y>0 && x<width-1        ? board[index-width+1]    : new Cell( true );
+            cell.siblings[6] = x<width-1 && y<height-1  ? board[index+1+width]        : new Cell( true );
+            cell.siblings[7] = x>0 && y<height-1  ? board[index+width-1]    : new Cell( true );
+
+            cell.index = index;
+            cell.x = x;
+            cell.y = y;
+        }
     }
 
     private function shuffle( a:Cell, b:Cell ): int
@@ -54,15 +63,15 @@ public class BattleField {
 
     public function Step() : void
     {
-        for( var index : uint = 0; index<board.length; index++ )
+        for( var n : uint = 0; n<soliders.length; n++ )
         {
-            var cell : Cell = board[index];
-            if( cell.solider == null ) continue;
-            var i : uint = cell.solider.Move( cell );
+            var cell : Cell = soliders[n].cell;
+            var i : uint = soliders[n].Move();
             if( i != cell.index )
             {
                 board[i].solider = cell.solider;
                 cell.solider = null;
+                soliders[n].cell = board[i];
             }
         }
     }
